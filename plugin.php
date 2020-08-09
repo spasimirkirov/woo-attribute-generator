@@ -16,18 +16,13 @@ if (!defined('ABSPATH')) {
 
 class WooAttributePlugin
 {
-    private $db;
     private string $plugin_path;
-    private string $template_path;
     private string $includes_path;
 
     public function __construct()
     {
-        global $wpdb;
-        $this->db = $wpdb;
         $this->plugin_path = plugin_dir_path(__FILE__);
-        $this->template_path = plugin_dir_path(__FILE__) . '/template';
-        $this->includes_path = plugin_dir_path(__FILE__) . '/inc';
+        $this->includes_path = $this->plugin_path . '/inc';
         $this->register();
     }
 
@@ -35,19 +30,36 @@ class WooAttributePlugin
     {
         $this->includes();
         add_action('admin_menu', 'wag_admin_menu_option');
-        add_action('updated_post_meta', 'create_attribute_template', 10, 4);
-        add_action('added_post_meta', 'create_attribute_template', 10, 4);
+        add_action('admin_init', [$this, 'settings']);
     }
 
     function includes()
     {
-        require_once $this->includes_path . '/callbacks.php';
         require_once $this->includes_path . '/database.php';
+        require_once $this->includes_path . '/callbacks.php';
     }
 
-    function template($name)
+    function settings()
     {
-        return require_once $this->template_path . '/' . $name . '.php';
+
+        register_setting('wag_option_group', 'wag_auto_generate', [
+            'type' => 'boolean',
+            'description' => 'Enable/Disable terms auto generate upon product import',
+            'default' => false
+        ]);
+
+        add_settings_section('wag_plugin_configuration', 'Settings', '', 'wag_settings');
+
+        add_settings_field(
+            'wag_auto_generate',
+            'Генериране на термини при вкарване на продукт?',
+            function () {
+                echo '<input type="checkbox" name="wag_auto_generate" value="1" ' . checked('1', get_option('wag_auto_generate'), false) . '/>';
+            },
+            'wag_settings',
+            'wag_plugin_configuration',
+            ['label_for' => 'wag_auto_generate'],
+        );
     }
 }
 
@@ -55,5 +67,7 @@ register_activation_hook(__FILE__, 'wag_activation_hook');
 register_deactivation_hook(__FILE__, 'wag_deactivation_hook');
 register_uninstall_hook(__FILE__, 'wag_uninstallation_hook');
 
+if (get_option('wag_auto_generate', false))
+    add_action('added_post_meta', 'wag_on_post_meta_update_hook', 10, 4);
 
 $wooAttributePlugin = new WooAttributePlugin();

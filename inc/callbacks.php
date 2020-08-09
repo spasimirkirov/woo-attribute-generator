@@ -17,15 +17,19 @@ function wag_uninstallation_hook()
     db_drop_wag_attribute_templates_table();
 }
 
-function wag_admin_menu_option()
+function wag_admin_menu()
 {
-    add_menu_page('Woo Attributes Generator', 'Woo Attributes', 'manage_options', 'wag_attributes');
-    add_submenu_page('wag_attributes', 'Woo Attributes Generator', 'Attributes', 'manage_options', 'wag_attributes',
-        'wag_attributes_page_callback');
-    add_submenu_page('wag_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'wag_terms',
-        'wag_terms_page_callback');
-    add_submenu_page('wag_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'wag_settings',
-        'wag_settings_page_callback');
+    $main_page = add_menu_page('Woo Attributes Generator', 'Woo Attributes', 'manage_options', 'wag_attributes');
+    $pages = [
+        ['wag_attributes', 'Woo Attributes Generator', 'Attributes', 'manage_options', 'wag_attributes', 'wag_attributes_page_callback'],
+        ['wag_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'wag_terms', 'wag_terms_page_callback'],
+        ['wag_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'wag_settings', 'wag_settings_page_callback'],
+    ];
+    add_action('load-' . $main_page, 'wag_load_admin_scripts');
+    foreach ($pages as $page) {
+        $sub_page = add_submenu_page(...$page);
+        add_action('load-' . $sub_page, 'wag_load_admin_scripts');
+    }
 }
 
 function wag_attributes_page_callback()
@@ -41,6 +45,19 @@ function wag_terms_page_callback()
 function wag_settings_page_callback()
 {
     require_once plugin_dir_path(__FILE__) . 'template/settings.php';
+}
+
+function wag_load_admin_scripts()
+{
+    add_action('admin_enqueue_scripts', 'wag_enqueue_bootstrap_scripts');
+}
+
+function wag_enqueue_bootstrap_scripts(): void
+{
+    wp_enqueue_style('st_bootstrap4_css', plugin_dir_url(__FILE__) . 'assets/css/bootstrap.min.css');
+    wp_enqueue_script('st_jquery_slim_min', plugin_dir_path(__FILE__) . 'assets/css/jquery-3.5.1.slim.min.js', array('jquery'), '', true);
+    wp_enqueue_script('st_popper_min', plugin_dir_path(__FILE__) . 'assets/css/popper.min.js', array('jquery'), '', true);
+    wp_enqueue_script('st_bootstrap4_js', plugin_dir_path(__FILE__) . 'assets/css/bootstrap.min.js', array('jquery'), '', true);
 }
 
 function wag_on_post_meta_update_hook($meta_id, $post_id, $meta_key, $meta_value)

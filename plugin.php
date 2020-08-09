@@ -30,7 +30,7 @@ class WooAttributePlugin
         $this->includes();
         if (get_option('wag_auto_generate', false))
             add_action('added_post_meta', 'wag_on_post_meta_update_hook', 10, 4);
-        add_action('admin_menu', 'wag_admin_menu_option');
+        add_action('admin_menu', 'wag_admin_menu');
         add_action('admin_init', [$this, 'settings']);
     }
 

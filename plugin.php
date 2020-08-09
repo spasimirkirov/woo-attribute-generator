@@ -22,13 +22,14 @@ class WooAttributePlugin
     public function __construct()
     {
         $this->plugin_path = plugin_dir_path(__FILE__);
-        $this->includes_path = $this->plugin_path . '/inc';
-        $this->register();
+        $this->includes_path = $this->plugin_path . 'inc';
     }
 
-    function register()
+    function init()
     {
         $this->includes();
+        if (get_option('wag_auto_generate', false))
+            add_action('added_post_meta', 'wag_on_post_meta_update_hook', 10, 4);
         add_action('admin_menu', 'wag_admin_menu_option');
         add_action('admin_init', [$this, 'settings']);
     }
@@ -67,7 +68,16 @@ register_activation_hook(__FILE__, 'wag_activation_hook');
 register_deactivation_hook(__FILE__, 'wag_deactivation_hook');
 register_uninstall_hook(__FILE__, 'wag_uninstallation_hook');
 
-if (get_option('wag_auto_generate', false))
-    add_action('added_post_meta', 'wag_on_post_meta_update_hook', 10, 4);
-
-$wooAttributePlugin = new WooAttributePlugin();
+$is_woo_active = in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')));
+if (!$is_woo_active) {
+    add_action('admin_notices', function () {
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p><?php _e('WooCommerce е неактивен, моля активирайте го преди да използвате Woo Attribute Generator'); ?></p>
+        </div>
+        <?php
+    });
+} else {
+    $WooAttributePlugin = new WooAttributePlugin();
+    $WooAttributePlugin->init();
+}

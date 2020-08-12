@@ -1,9 +1,13 @@
 <?php
 
+use WooCustomAttributes\Inc\Database;
+
 function wag_activation_hook()
 {
     flush_rewrite_rules();
-    db_create_attribute_templates_table();
+    $db = new Database();
+    $db->create_custom_attributes_templates_table();
+    update_option("wag_auto_generate", false);
 }
 
 function wag_deactivation_hook()
@@ -14,16 +18,18 @@ function wag_deactivation_hook()
 function wag_uninstallation_hook()
 {
     flush_rewrite_rules();
-    db_drop_wag_attribute_templates_table();
+    $db = new Database();
+    $db->drop_custom_attributes_templates_table();
+    delete_option("wag_auto_generate");
 }
 
 function wag_admin_menu()
 {
-    $main_page = add_menu_page('Woo Attributes Generator', 'Woo Attributes', 'manage_options', 'wag_attributes');
+    $main_page = add_menu_page('Woo Custom Attributes', 'Woo Custom Attributes', 'manage_options', 'woo_custom_attributes');
     $pages = [
-        ['wag_attributes', 'Woo Attributes Generator', 'Attributes', 'manage_options', 'wag_attributes', 'wag_attributes_page_callback'],
-        ['wag_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'wag_terms', 'wag_terms_page_callback'],
-        ['wag_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'wag_settings', 'wag_settings_page_callback'],
+        ['woo_custom_attributes', 'Woo Attributes Generator', 'Attributes', 'manage_options', 'woo_custom_attributes', 'wag_attributes_page_callback'],
+        ['woo_custom_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'wag_terms', 'wag_terms_page_callback'],
+        ['woo_custom_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'wag_settings', 'wag_settings_page_callback'],
     ];
     add_action('load-' . $main_page, 'wag_load_admin_scripts');
     foreach ($pages as $page) {
@@ -52,7 +58,7 @@ function wag_load_admin_scripts()
     add_action('admin_enqueue_scripts', 'wag_enqueue_bootstrap_scripts');
 }
 
-function wag_enqueue_bootstrap_scripts(): void
+function wag_enqueue_bootstrap_scripts()
 {
     wp_enqueue_style('st_bootstrap4_css', plugin_dir_url(__FILE__) . 'assets/css/bootstrap.min.css');
     wp_enqueue_script('st_jquery_slim_min', plugin_dir_path(__FILE__) . 'assets/css/jquery-3.5.1.slim.min.js', array('jquery'), '', true);
@@ -60,7 +66,30 @@ function wag_enqueue_bootstrap_scripts(): void
     wp_enqueue_script('st_bootstrap4_js', plugin_dir_path(__FILE__) . 'assets/css/bootstrap.min.js', array('jquery'), '', true);
 }
 
-function wag_on_post_meta_update_hook($meta_id, $post_id, $meta_key, $meta_value)
+function get_distinct_meta_attributes()
+{
+    $db = new Database();
+    $distinct_meta_attributes = [];
+    $meta_attributes = $db->select_all_product_attributes();
+    foreach ($meta_attributes as $meta_attribute_array) {
+        $attributes = unserialize($meta_attribute_array['meta_value']);
+        foreach ($attributes as $attribute){
+            if (!in_array($attribute['name'], $distinct_meta_attributes))
+                $distinct_meta_attributes[] = $attribute['name'];
+        }
+    }
+    return $distinct_meta_attributes;
+}
+
+function request_create_attribute_taxonomies(array $attribute_templates)
+{
+    $db = new Database();
+    foreach ($attribute_templates as $attribute_template) {
+        $db->insert_attribute_taxonomy($attribute_template);
+    }
+}
+
+function hook_create_term_on_meta_update($meta_id, $post_id, $meta_key, $meta_value)
 {
     if ($meta_key === '_product_attributes') {
         foreach ($meta_value as $attribute) {
@@ -76,19 +105,13 @@ function wag_on_post_meta_update_hook($meta_id, $post_id, $meta_key, $meta_value
     }
 }
 
-function request_create_attributes(array $attribute_templates)
-{
-    foreach ($attribute_templates as $attribute_template) {
-        db_insert_attribute_taxonomy($attribute_template);
-    }
-}
-
 function request_create_terms(array $attribute_taxonomies)
 {
-    $product_metas = db_select_product_attributes();
+    $db = new Database();
+    $product_meta_attributes = $db->select_all_product_attributes();
     foreach ($attribute_taxonomies as $taxonomy) {
-        foreach ($product_metas as $product_meta) {
-            $product_attributes = unserialize($product_meta['meta_value']);
+        foreach ($product_meta_attributes as $product_meta_attribute) {
+            $product_attributes = unserialize($product_meta_attribute['meta_value']);
             $taxonomy_name = array_column($product_attributes, 'name');
             $i = array_search($taxonomy, $taxonomy_name);
             $attribute = $product_attributes[$i];
@@ -97,7 +120,7 @@ function request_create_terms(array $attribute_taxonomies)
                 continue;
             if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($attribute['name'])) {
                 $pa_name = wc_attribute_taxonomy_name($attribute['name']);
-                $object_term = wp_set_object_terms($product_meta['post_id'], $attribute['value'], $pa_name, true);
+                $object_term = wp_set_object_terms($product_meta_attribute['post_id'], $attribute['value'], $pa_name, true);
                 if (is_wp_error($object_term)) {
                     var_dump($object_term);
                     return;

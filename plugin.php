@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Woo Attribute Generator
-Plugin URI: https://github.com/spasimirkirov/woo-attribute-generator
+Plugin Name: Woo Custom Attributes
+Plugin URI: https://github.com/spasimirkirov/woo-custom-attributes
 Description: Generates WooCommerce Attributes and Terms from product's attributes
 Version: 1.0.0
 Author: Spasimir Kirov
@@ -16,8 +16,8 @@ if (!defined('ABSPATH')) {
 
 class WooAttributePlugin
 {
-    private string $plugin_path;
-    private string $includes_path;
+    private $plugin_path;
+    private $includes_path;
 
     public function __construct()
     {
@@ -29,7 +29,7 @@ class WooAttributePlugin
     {
         $this->includes();
         if (get_option('wag_auto_generate', false))
-            add_action('added_post_meta', 'wag_on_post_meta_update_hook', 10, 4);
+            add_action('added_post_meta', 'hook_create_term_on_meta_update', 10, 4);
         add_action('admin_menu', 'wag_admin_menu');
         add_action('admin_init', [$this, 'settings']);
     }
@@ -42,15 +42,12 @@ class WooAttributePlugin
 
     function settings()
     {
-
         register_setting('wag_option_group', 'wag_auto_generate', [
             'type' => 'boolean',
             'description' => 'Enable/Disable terms auto generate upon product import',
             'default' => false
         ]);
-
         add_settings_section('wag_plugin_configuration', 'Settings', '', 'wag_settings');
-
         add_settings_field(
             'wag_auto_generate',
             'Генериране на термини при вкарване на продукт?',

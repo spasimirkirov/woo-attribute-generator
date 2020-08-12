@@ -1,12 +1,15 @@
 <?php
 
-$available_templates = db_select_attribute_template(['output' => 'ARRAY']);
+use WooCustomAttributes\Inc\Database;
+
+$db = new Database();
+$available_meta_attributes = get_distinct_meta_attributes();
 
 if (isset($_POST['wag_create_attributes_submit'])) {
     if (!isset($_POST['attributes']) || empty($_POST['attributes'])) {
         show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили атрибути за създаване</p></div>');
     } else {
-        request_create_attributes($_POST['attributes']);
+        request_create_attribute_taxonomies($_POST['attributes']);
         show_message('<div class="updated notice notice-success is-dismissible"><p>Успешно създаване на атрибути ' . implode(', ', $_POST['attributes']) . '</p></div>');
     }
 }
@@ -25,15 +28,15 @@ if (isset($_POST['wag_create_attributes_submit'])) {
                     <h5 class="card-title">Изберете атрибути които да бъдат създадени</h5>
                     <form action="" method="post">
                         <div class="form-row mb-4">
-                            <?php foreach ($available_templates as $attribute): ?>
+                            <?php foreach ($available_meta_attributes as $meta_attribute): ?>
                                 <div class="form-check">
                                     <label>
                                         <input type="checkbox"
-                                               value="<?php echo $attribute['name']; ?>"
+                                               value="<?php echo $meta_attribute; ?>"
                                                name="attributes[]"
-                                            <?php echo db_select_attribute_taxonomies(['name' => $attribute['name']]) ? 'disabled checked' : null; ?>
+                                            <?php echo $db->select_attribute_taxonomy(['name' => $meta_attribute]) ? 'disabled checked' : null; ?>
                                         >
-                                        <?php echo $attribute['name']; ?>
+                                        <?php echo $meta_attribute; ?>
                                     </label>
                                 </div>
                             <?php endforeach; ?>

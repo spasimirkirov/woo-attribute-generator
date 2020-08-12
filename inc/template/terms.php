@@ -1,6 +1,9 @@
 <?php
 
-$available_taxonomies = db_select_attribute_taxonomies();
+use WooCustomAttributes\Inc\Database;
+
+$db = new Database();
+$available_taxonomies = $db->select_attribute_taxonomy();
 
 if (isset($_POST['wag_create_terms_submit'])) {
     if (!isset($_POST['attributes']) || empty($_POST['attributes'])) {

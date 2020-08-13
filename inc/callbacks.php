@@ -5,8 +5,6 @@ use WooCustomAttributes\Inc\Database;
 function wag_activation_hook()
 {
     flush_rewrite_rules();
-    $db = new Database();
-    $db->create_custom_attributes_templates_table();
     update_option("wag_auto_generate", false);
 }
 
@@ -18,8 +16,6 @@ function wag_deactivation_hook()
 function wag_uninstallation_hook()
 {
     flush_rewrite_rules();
-    $db = new Database();
-    $db->drop_custom_attributes_templates_table();
     delete_option("wag_auto_generate");
 }
 

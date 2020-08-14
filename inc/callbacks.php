@@ -68,8 +68,8 @@ function get_distinct_meta_attributes()
     $distinct_meta_attributes = [];
     $meta_attributes = $db->select_all_product_attributes();
     foreach ($meta_attributes as $meta_attribute_array) {
-        $attributes = unserialize($meta_attribute_array['meta_value']);
-        foreach ($attributes as $attribute){
+        $attributes = unserialize($meta_attribute_array['_product_attributes']);
+        foreach ($attributes as $attribute) {
             if (!in_array($attribute['name'], $distinct_meta_attributes))
                 $distinct_meta_attributes[] = $attribute['name'];
         }
@@ -87,46 +87,58 @@ function request_create_attribute_taxonomies(array $attribute_templates)
 
 function hook_create_term_on_meta_update($meta_id, $post_id, $meta_key, $meta_value)
 {
+    $db = new Database();
     if ($meta_key === '_product_attributes') {
         foreach ($meta_value as $attribute) {
             if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($attribute['name'])) {
-                $pa_name = wc_attribute_taxonomy_name($attribute['name']);
-                $object_term = wp_set_object_terms($post_id, $attribute['value'], $pa_name, true);
-                if (is_wp_error($object_term)) {
-                    var_dump($object_term);
-                    return;
+                $pa_attribute = attach_post_term_meta($post_id, $attribute['value'], $attribute['name']);
+                if (!is_wp_error($pa_attribute)) {
+                    $meta_value[$pa_attribute['name']] = $pa_attribute;
+                    $db->update_post_meta_attributes($post_id, serialize($meta_value));
                 }
             }
         }
     }
 }
 
+function attach_post_term_meta($post_id, $term, $taxonomy)
+{
+    $pa_name = wc_attribute_taxonomy_name($taxonomy);
+    $object_term = wp_set_object_terms($post_id, $term, $pa_name, true);
+    if (is_wp_error($object_term)) {
+        var_dump($object_term);
+        return $object_term;
+    }
+    return array([
+        'name' => $pa_name,
+        'is_visible' => 1,
+        'is_variation' => 0,
+        'is_taxonomy' => 1,
+    ]);
+}
+
 function request_create_terms(array $attribute_taxonomies)
 {
+    wp_raise_memory_limit();
     $db = new Database();
-    $product_meta_attributes = $db->select_all_product_attributes();
+    $products = $db->select_all_product_attributes();
     foreach ($attribute_taxonomies as $taxonomy) {
-        foreach ($product_meta_attributes as $product_meta_attribute) {
-            $product_attributes = unserialize($product_meta_attribute['meta_value']);
-            $taxonomy_name = array_column($product_attributes, 'name');
-            $i = array_search($taxonomy, $taxonomy_name);
-            $attribute = $product_attributes[$i];
-
-            if ($attribute['name'] !== $taxonomy)
+        foreach ($products as $product) {
+            $_product_attributes = unserialize($product['_product_attributes']);
+            if (!is_array($_product_attributes)) {
                 continue;
-            if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($attribute['name'])) {
-                $pa_name = wc_attribute_taxonomy_name($attribute['name']);
-                $object_term = wp_set_object_terms($product_meta_attribute['post_id'], $attribute['value'], $pa_name, true);
-                if (is_wp_error($object_term)) {
-                    var_dump($object_term);
-                    return;
+            }
+            $attribute_names = array_column($_product_attributes, 'name');
+            $i = array_search($taxonomy, $attribute_names);
+            $current_attribute = $_product_attributes[$i];
+            if ($current_attribute['name'] !== $taxonomy)
+                continue;
+            if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($current_attribute['name'])) {
+                $pa_attribute = attach_post_term_meta($product['post_id'], $current_attribute['value'], $current_attribute['name']);
+                if (!is_wp_error($pa_attribute)) {
+                    $_product_attributes[$pa_attribute['name']] = $pa_attribute;
+                    $db->update_post_meta_attributes($product['post_id'], serialize($_product_attributes));
                 }
-                $product_attributes_data[$pa_name] = [
-                    'name' => $pa_name,
-                    'is_visible' => 1,
-                    'is_variation' => 0,
-                    'is_taxonomy' => 1,
-                ];
             }
         }
     }

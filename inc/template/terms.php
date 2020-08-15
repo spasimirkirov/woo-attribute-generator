@@ -4,12 +4,14 @@ use WooCustomAttributes\Inc\Database;
 
 $db = new Database();
 $available_taxonomies = $db->select_attribute_taxonomy();
+$available_meta_attributes = get_distinct_meta_attributes();
+sort($available_meta_attributes);
 
 if (isset($_POST['wag_create_terms_submit'])) {
     if (!isset($_POST['attributes']) || empty($_POST['attributes'])) {
         show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили атрибути за чиито термини да бъдат генерирани</p></div>');
     } else {
-        request_create_terms($_POST['attributes']);
+        request_create_terms($_POST['taxonomy'], $_POST['attributes']);
         show_message('<div class="updated notice notice-success is-dismissible"><p>Успешно генериране на термини за атрибути ' . implode(', ', $_POST['attributes']) . '</p></div>');
     }
 }
@@ -28,14 +30,24 @@ if (isset($_POST['wag_create_terms_submit'])) {
                     <h5 class="card-title">Изберете атрибути които да бъдат създадени</h5>
                     <form action="" method="post">
                         <div class="form-row mb-4">
-                            <?php foreach ($available_taxonomies as $taxonomy): ?>
+                            <label>
+                                <select name="taxonomy">
+                                    <?php foreach ($available_taxonomies as $taxonomy): ?>
+                                        <option value="<?php echo $taxonomy['attribute_label']; ?>">
+                                            <?php echo $taxonomy['attribute_label'] ?> </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="form-row mb-4">
+                            <?php foreach ($available_meta_attributes as $attribute): ?>
                                 <div class="form-check">
                                     <label>
                                         <input type="checkbox"
-                                               value="<?php echo $taxonomy['attribute_label']; ?>"
+                                               value="<?php echo $attribute; ?>"
                                                name="attributes[]"
                                         >
-                                        <?php echo $taxonomy['attribute_label']; ?>
+                                        <?php echo $attribute; ?>
                                     </label>
                                 </div>
                             <?php endforeach; ?>

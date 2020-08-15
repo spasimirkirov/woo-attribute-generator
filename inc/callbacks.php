@@ -2,20 +2,24 @@
 
 use WooCustomAttributes\Inc\Database;
 
-function wag_activation_hook()
+function wca_activation_hook()
 {
     flush_rewrite_rules();
+    $db = new Database();
+    $db->create_taxonomy_relations_table();
     update_option("wag_auto_generate", false);
 }
 
-function wag_deactivation_hook()
+function wca_deactivation_hook()
 {
     flush_rewrite_rules();
 }
 
-function wag_uninstallation_hook()
+function wca_uninstallation_hook()
 {
     flush_rewrite_rules();
+    $db = new Database();
+    $db->drop_taxonomy_relations_table();
     delete_option("wag_auto_generate");
 }
 
@@ -24,8 +28,9 @@ function wag_admin_menu()
     $main_page = add_menu_page('Woo Custom Attributes', 'Woo Custom Attributes', 'manage_options', 'woo_custom_attributes');
     $pages = [
         ['woo_custom_attributes', 'Woo Attributes Generator', 'Attributes', 'manage_options', 'woo_custom_attributes', 'wag_attributes_page_callback'],
-        ['woo_custom_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'wag_terms', 'wag_terms_page_callback'],
-        ['woo_custom_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'wag_settings', 'wag_settings_page_callback'],
+        ['woo_custom_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'terms', 'wag_terms_page_callback'],
+        ['woo_custom_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'settings', 'wag_settings_page_callback'],
+        ['woo_custom_attributes', 'Woo Attributes Relation', 'Relations', 'manage_options', 'relations', 'wag_relation_page_callback'],
     ];
     add_action('load-' . $main_page, 'wag_load_admin_scripts');
     foreach ($pages as $page) {
@@ -47,6 +52,11 @@ function wag_terms_page_callback()
 function wag_settings_page_callback()
 {
     require_once plugin_dir_path(__FILE__) . 'template/settings.php';
+}
+
+function wag_relation_page_callback()
+{
+    require_once plugin_dir_path(__FILE__) . 'template/relation.php';
 }
 
 function wag_load_admin_scripts()
@@ -87,18 +97,18 @@ function request_create_attribute_taxonomies(array $attribute_templates)
 
 function hook_create_term_on_meta_update($meta_id, $post_id, $meta_key, $meta_value)
 {
-    $db = new Database();
-    if ($meta_key === '_product_attributes') {
-        foreach ($meta_value as $attribute) {
-            if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($attribute['name'])) {
-                $pa_attribute = attach_post_term_meta($post_id, $attribute['value'], $attribute['name']);
-                if (!is_wp_error($pa_attribute)) {
-                    $meta_value[$pa_attribute['name']] = $pa_attribute;
-                    $db->update_post_meta_attributes($post_id, serialize($meta_value));
-                }
-            }
-        }
-    }
+//    $db = new Database();
+//    if ($meta_key === '_product_attributes') {
+//        foreach ($meta_value as $attribute) {
+//            if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($attribute['name'])) {
+//                $pa_attribute = attach_post_term_meta($post_id, $attribute['value'], $attribute['name']);
+//                if (!is_wp_error($pa_attribute)) {
+//                    $meta_value[$pa_attribute['name']] = $pa_attribute;
+//                    $db->update_post_meta_attributes($post_id, serialize($meta_value));
+//                }
+//            }
+//        }
+//    }
 }
 
 function attach_post_term_meta($post_id, $term, $taxonomy)
@@ -109,6 +119,7 @@ function attach_post_term_meta($post_id, $term, $taxonomy)
         var_dump($object_term);
         return $object_term;
     }
+
     return array([
         'name' => $pa_name,
         'is_visible' => 1,
@@ -117,29 +128,37 @@ function attach_post_term_meta($post_id, $term, $taxonomy)
     ]);
 }
 
-function request_create_terms(array $attribute_taxonomies)
+function request_link_attributes(string $taxonomy, array $attribute_labels)
+{
+
+}
+
+function request_create_terms(string $taxonomy, array $attribute_labels)
 {
     wp_raise_memory_limit();
     $db = new Database();
-    $products = $db->select_all_product_attributes();
-    foreach ($attribute_taxonomies as $taxonomy) {
-        foreach ($products as $product) {
-            $_product_attributes = unserialize($product['_product_attributes']);
-            if (!is_array($_product_attributes)) {
+    $products = array_map(function ($arr) {
+        $arr['_product_attributes'] = unserialize($arr['_product_attributes']);
+        return $arr;
+    }, $db->select_all_product_attributes());
+    foreach ($products as $product) {
+        if (!is_array($product['_product_attributes'])) {
+            continue;
+        }
+        foreach ($product['_product_attributes'] as $product_attribute) {
+            if (!in_array($product_attribute['name'], $attribute_labels))
                 continue;
-            }
-            $attribute_names = array_column($_product_attributes, 'name');
-            $i = array_search($taxonomy, $attribute_names);
-            $current_attribute = $_product_attributes[$i];
-            if ($current_attribute['name'] !== $taxonomy)
-                continue;
-            if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($current_attribute['name'])) {
-                $pa_attribute = attach_post_term_meta($product['post_id'], $current_attribute['value'], $current_attribute['name']);
+            if ($taxonomy_id = wc_attribute_taxonomy_id_by_name($taxonomy)) {
+                var_dump($product_attribute, $taxonomy);
+                $pa_attribute = attach_post_term_meta($product['post_id'], $product_attribute['value'], $taxonomy);
                 if (!is_wp_error($pa_attribute)) {
                     $_product_attributes[$pa_attribute['name']] = $pa_attribute;
-                    $db->update_post_meta_attributes($product['post_id'], serialize($_product_attributes));
+                    $_product_attributes_serialized = serialize($_product_attributes);
+                    $db->update_post_meta_attributes($product['post_id'], $_product_attributes_serialized);
                 }
             }
+            break;
         }
+
     }
 }

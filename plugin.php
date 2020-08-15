@@ -61,9 +61,9 @@ class WooAttributePlugin
     }
 }
 
-register_activation_hook(__FILE__, 'wag_activation_hook');
-register_deactivation_hook(__FILE__, 'wag_deactivation_hook');
-register_uninstall_hook(__FILE__, 'wag_uninstallation_hook');
+register_activation_hook(__FILE__, 'wca_activation_hook');
+register_deactivation_hook(__FILE__, 'wca_deactivation_hook');
+register_uninstall_hook(__FILE__, 'wca_uninstallation_hook');
 
 $is_woo_active = in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')));
 if (!$is_woo_active) {

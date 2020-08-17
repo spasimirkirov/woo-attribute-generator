@@ -128,9 +128,31 @@ function attach_post_term_meta($post_id, $term, $taxonomy)
     ]);
 }
 
-function request_link_attributes(string $taxonomy, array $attribute_labels)
+function request_create_relation(int $taxonomy_id, string $meta_name)
 {
+    $db = new Database();
+    $relation = is_taxonomy_meta_related($taxonomy_id, $meta_name);
+    if ($relation) {
+        show_message('<div class="error notice notice-error is-dismissible"><p>' . $relation['attribute_label'] . ' и ' . $relation['meta_name'] . ' вече са релативни</p></div>');
+        return;
+    }
+    $rows = $db->insert_taxonomy_relations($taxonomy_id, $meta_name);
+    if ($rows && $rows > 0)
+        show_message('<div class="updated notice notice-success is-dismissible"><p> Добавяне на ' . $meta_name . ' към релации</p></div>');
+}
 
+function request_delete_relation(array $relation_ids)
+{
+    $db = new Database();
+    $rows = $db->delete_taxonomy_relations($relation_ids);
+    if ($rows && $rows > 0)
+        show_message('<div class="updated notice notice-success is-dismissible"><p> Успешно изтриване на ' . $rows . ' релации</p></div>');
+}
+
+function is_taxonomy_meta_related($taxonomy_id, $meta_name)
+{
+    $db = new Database();
+    return $db->select_taxonomy_relations(['taxonomy_id' => $taxonomy_id, 'meta_name' => $meta_name, 'row' => 0]);
 }
 
 function request_create_terms(string $taxonomy, array $attribute_labels)
@@ -142,9 +164,8 @@ function request_create_terms(string $taxonomy, array $attribute_labels)
         return $arr;
     }, $db->select_all_product_attributes());
     foreach ($products as $product) {
-        if (!is_array($product['_product_attributes'])) {
+        if (!is_array($product['_product_attributes']))
             continue;
-        }
         foreach ($product['_product_attributes'] as $product_attribute) {
             if (!in_array($product_attribute['name'], $attribute_labels))
                 continue;
@@ -159,6 +180,5 @@ function request_create_terms(string $taxonomy, array $attribute_labels)
             }
             break;
         }
-
     }
 }

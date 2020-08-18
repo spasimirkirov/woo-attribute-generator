@@ -42,12 +42,12 @@ sort($available_meta_attributes);
             Управление на взаймотношенията м/у продуктови атрибути и продуктови мета атрибути
         </div>
     </div>
-    <div class="row row-cols-1">
-        <div class="card col-12">
+    <div class="row row-cols-1 row-cols-md-2">
+        <div class="card col-12 col-md-4">
             <div class="card-body">
                 <form action="" method="post">
-                    <div class="row row-cols-1 row-cols-md-2">
-                        <div class="col-auto">
+                    <div class="row row-cols-1">
+                        <div class="col-12">
                             <label for="select_taxonomy">Избор на таксономия на атрибут</label>
                             <div class="form-row">
                                 <select id="select_taxonomy" name="taxonomy_id">
@@ -64,11 +64,11 @@ sort($available_meta_attributes);
                                         href="<?= admin_url('edit.php?post_type=product&page=product_attributes') ?>">Продукти->Атрибути</a>
                             </p>
                         </div>
-                        <div class="col-auto">
+                        <div class="col-12">
                             <label for="select_meta">Избор на мета атрибут</label>
                             <div class="form-row">
-                                <select id="select_meta" name="meta_name" class="custom-select custom-select-sm"
-                                        multiple>
+                                <select id="select_meta" name="meta_name[]" class="custom-select custom-select-sm"
+                                        multiple="multiple" size="20">
                                     <option value="0">Избор</option>
                                     <?php foreach (array_filter($available_meta_attributes) as $attribute): ?>
                                         <option value="<?php echo $attribute; ?>">
@@ -87,43 +87,27 @@ sort($available_meta_attributes);
             </div>
         </div>
 
-        <div class="card col-12">
+        <div class="card col-12 col-md-8">
             <div class="card-body">
                 <form action="" method="post">
-                    <table class="table table-stripped table-hover table-bordered table-sm">
-                        <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Атрибут/Мета атрибут</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($db->select_taxonomy_relation_labels() as $taxonomy): ?>
-                            <tr>
-                                <th colspan="3"><?php echo $taxonomy ?></th>
-                            </tr>
+                    <?php foreach ($db->select_taxonomy_relation_labels() as $taxonomy): ?>
+                        <h4><?php echo $taxonomy ?></h4>
+                        <hr>
+                        <div class="form-row mb-4">
                             <?php foreach ($db->select_taxonomy_relations(['attribute_label' => $taxonomy]) as $relation): ?>
-                                <tr>
-                                    <th scope="row">
-                                        <label>
-                                            <input type="checkbox" name="relation_ids[]"
-                                                   value=" <?php echo $relation['id'] ?>">
-                                        </label>
-                                    </th>
-                                    <td>
-                                        <?php echo $relation['attribute_label'] ?>/
+                                <div class="form-check">
+                                    <label>
+                                        <input type="checkbox" name="relation_ids[]"
+                                               value=" <?php echo $relation['id'] ?>">
                                         <?php echo $relation['meta_name'] ?>
-                                    </td>
-                                </tr>
+                                    </label>
+                                </div>
                             <?php endforeach; ?>
-                        <?php endforeach; ?>
-                        <?php if (!empty($available_relations)): ?>
-                            <tr>
-                                <td colspan="3">Не са намерени записи на релации</td>
-                            </tr>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php if (empty($available_relations)): ?>
+                        <h4>Не са намерени записи на релации</h4>
+                    <?php endif; ?>
                     <?php if (!empty($db->select_taxonomy_relation_labels())): ?>
                         <label for="select_action"> Изберете действие </label>
                         <div class="form-row mb-4">

@@ -27,10 +27,8 @@ function wag_admin_menu()
 {
     $main_page = add_menu_page('Woo Custom Attributes', 'Woo Custom Attributes', 'manage_options', 'woo_custom_attributes');
     $pages = [
-        ['woo_custom_attributes', 'Woo Attributes Generator', 'Attributes', 'manage_options', 'woo_custom_attributes', 'wag_attributes_page_callback'],
-        ['woo_custom_attributes', 'Woo Term Generator', 'Terms', 'manage_options', 'terms', 'wag_terms_page_callback'],
+        ['woo_custom_attributes', 'Woo Attributes Relation', 'Relations', 'manage_options', 'woo_custom_attributes', 'wag_relation_page_callback'],
         ['woo_custom_attributes', 'Woo Attributes Settings', 'Settings', 'manage_options', 'settings', 'wag_settings_page_callback'],
-        ['woo_custom_attributes', 'Woo Attributes Relation', 'Relations', 'manage_options', 'relations', 'wag_relation_page_callback'],
     ];
     add_action('load-' . $main_page, 'wag_load_admin_scripts');
     foreach ($pages as $page) {
@@ -39,24 +37,14 @@ function wag_admin_menu()
     }
 }
 
-function wag_attributes_page_callback()
+function wag_relation_page_callback()
 {
-    require_once plugin_dir_path(__FILE__) . 'template/attributes.php';
-}
-
-function wag_terms_page_callback()
-{
-    require_once plugin_dir_path(__FILE__) . 'template/terms.php';
+    require_once plugin_dir_path(__FILE__) . 'template/relation.php';
 }
 
 function wag_settings_page_callback()
 {
     require_once plugin_dir_path(__FILE__) . 'template/settings.php';
-}
-
-function wag_relation_page_callback()
-{
-    require_once plugin_dir_path(__FILE__) . 'template/relation.php';
 }
 
 function wag_load_admin_scripts()
@@ -128,17 +116,20 @@ function attach_post_term_meta($post_id, $term, $taxonomy)
     ]);
 }
 
-function request_create_relation(int $taxonomy_id, string $meta_name)
+function request_create_relation(int $taxonomy_id, array $meta_names)
 {
     $db = new Database();
-    $relation = is_taxonomy_meta_related($taxonomy_id, $meta_name);
-    if ($relation) {
-        show_message('<div class="error notice notice-error is-dismissible"><p>' . $relation['attribute_label'] . ' и ' . $relation['meta_name'] . ' вече са релативни</p></div>');
-        return;
+    foreach ($meta_names as $meta_name) {
+        $relation = is_taxonomy_meta_related($taxonomy_id, $meta_name);
+        if ($relation) {
+            show_message('<div class="error notice notice-error is-dismissible"><p>' . $relation['attribute_label'] . ' и ' . $relation['meta_name'] . ' вече са релативни</p></div>');
+            return;
+        }
+        $rows = $db->insert_taxonomy_relations($taxonomy_id, $meta_name);
+        if ($rows && $rows > 0)
+            show_message('<div class="updated notice notice-success is-dismissible"><p>Успешно добавяне на ' . $meta_name . ' към релации</p></div>');
     }
-    $rows = $db->insert_taxonomy_relations($taxonomy_id, $meta_name);
-    if ($rows && $rows > 0)
-        show_message('<div class="updated notice notice-success is-dismissible"><p> Добавяне на ' . $meta_name . ' към релации</p></div>');
+
 }
 
 function request_delete_relation(array $relation_ids)

@@ -30,6 +30,7 @@ class Database
         $this->wpdb()->query("DROP TABLE IF EXISTS `{$this->wpdb()->base_prefix}wca_taxonomy_relations`");
     }
 
+
     public function select_taxonomy_relations($params = [])
     {
         $sql = "SELECT a.`id` , a.`taxonomy_id`, b.`attribute_label`, a.`meta_name` FROM `{$this->wpdb()->base_prefix}wca_taxonomy_relations` AS a ";
@@ -39,10 +40,21 @@ class Database
             $sql .= $this->wpdb()->prepare(" AND a.`taxonomy_id` = '%d'", $params['taxonomy_id']);
         if (isset($params['meta_name']))
             $sql .= $this->wpdb()->prepare(" AND a.`meta_name` = '%s'", $params['meta_name']);
+        if (isset($params['attribute_label']))
+            $sql .= $this->wpdb()->prepare(" AND b.`attribute_label` = '%s'", $params['attribute_label']);
+
         $sql .= " ORDER BY b.`attribute_label` ASC";
-        return isset($params['row']) ?
-            $this->wpdb()->get_row($sql, 'ARRAY_A', $params['row']) :
-            $this->wpdb()->get_results($sql, 'ARRAY_A');
+        if (isset($params['col']))
+            return $this->wpdb()->get_col($sql, $params['col']);
+        if (isset($params['row']))
+            return $this->wpdb()->get_row($sql, 'ARRAY_A', $params['row']);
+        return $this->wpdb()->get_results($sql, 'ARRAY_A');
+    }
+
+    public function select_taxonomy_relation_labels()
+    {
+        $results = $this->select_taxonomy_relations(['col' => 2]);
+        return array_unique($results);
     }
 
     public function insert_taxonomy_relations($taxonomy, $meta)

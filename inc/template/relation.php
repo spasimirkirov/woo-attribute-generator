@@ -39,7 +39,7 @@ sort($available_meta_attributes);
 
     <div class="row">
         <div class="col-12 card-header bg-dark text-light">
-            Управление на взаймотношенията м/у продуктови атрибути и продуктови мета атрибути
+            Управление на взаимоотношенията м/у продуктови атрибути и продуктови мета атрибути
         </div>
     </div>
     <div class="row row-cols-1 row-cols-md-2">

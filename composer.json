@@ -1,0 +1,16 @@
+{
+    "name": "razielvonchronos/woo-custom-attributes",
+    "description": "WordPress utility which uses WooCommerce Products for  Attributes with Meta Atributes linking and term generation.",
+    "authors": [
+        {
+            "name": "Spasimir Kirov",
+            "email": "spasimirkirov@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "WooCustomAttributes\\Inc\\": "inc"
+        }
+    }
+}

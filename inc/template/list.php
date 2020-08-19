@@ -4,13 +4,18 @@ use WooCustomAttributes\Inc\Database;
 
 if (isset($_POST['submit_term_action'])) {
     $requestApi = new \WooCustomAttributes\Inc\Request();
-    if ($_POST['action'] === 'none') {
+    if ($_POST['action'] === 'none')
         show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили действие</p></div>');
-    }
+
     if ($_POST['action'] === 'delete') {
         (!isset($_POST['relation_ids']) || empty($_POST['relation_ids'])) ?
             show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили релации за изтриване</p></div>') :
             $requestApi->delete_relation($_POST['relation_ids']);
+    }
+    if ($_POST['action'] === 'generate_terms') {
+        (!isset($_POST['relation_ids']) || empty($_POST['relation_ids'])) ?
+            show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили релации за генериране</p></div>') :
+            $requestApi->generate_terms($_POST['relation_ids']);
     }
 }
 
@@ -87,7 +92,7 @@ sort($available_meta_attributes);
                                 <select class="custom-select form-control mr-1" id="select_action" name="action">
                                     <option value="none">Избор</option>
                                     <option value="delete">Изтриване</option>
-                                    <option value="generate">Генериране на Термини</option>
+                                    <option value="generate_terms">Генериране на Термини</option>
                                 </select>
                                 <input class="btn btn-primary btn-sm" name="submit_term_action" type="submit"
                                        value="Изпълни">

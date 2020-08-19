@@ -71,4 +71,13 @@ class Request
             }
         }
     }
+
+    public function generate_terms($relation_ids)
+    {
+        foreach ($relation_ids as $relation_id) {
+            $relation = $this->db->select_taxonomy_relations(['id' => $relation_id]);
+            var_dump($relation);
+
+        }
+    }
 }

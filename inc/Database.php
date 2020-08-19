@@ -35,19 +35,28 @@ class Database
     {
         $sql = "SELECT a.`id` , a.`taxonomy_id`, b.`attribute_label`, a.`meta_name` FROM `{$this->wpdb()->base_prefix}wca_taxonomy_relations` AS a ";
         $sql .= " INNER JOIN `{$this->wpdb()->base_prefix}woocommerce_attribute_taxonomies` as b ON a.`taxonomy_id` = b.`attribute_id`";
-        $sql .= " WHERE a.`id` > '0'";
+
+        $sql .= isset($params['id']) ?
+            $this->wpdb()->prepare(" WHERE a.`id` = '%d'", $params['id']) :
+            " WHERE a.`id` > '0'";
+
         if (isset($params['taxonomy_id']))
             $sql .= $this->wpdb()->prepare(" AND a.`taxonomy_id` = '%d'", $params['taxonomy_id']);
+
         if (isset($params['meta_name']))
             $sql .= $this->wpdb()->prepare(" AND a.`meta_name` = '%s'", $params['meta_name']);
+
         if (isset($params['attribute_label']))
             $sql .= $this->wpdb()->prepare(" AND b.`attribute_label` = '%s'", $params['attribute_label']);
 
         $sql .= " ORDER BY b.`attribute_label` ASC";
+
         if (isset($params['col']))
             return $this->wpdb()->get_col($sql, $params['col']);
+
         if (isset($params['row']))
             return $this->wpdb()->get_row($sql, 'ARRAY_A', $params['row']);
+
         return $this->wpdb()->get_results($sql, 'ARRAY_A');
     }
 

@@ -4,14 +4,24 @@ namespace WooCustomAttributes\Inc;
 
 require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
+/**
+ * Class Database
+ * @package WooCustomAttributes\Inc
+ */
 class Database
 {
+    /**
+     * @return \wpdb
+     */
     public function wpdb()
     {
         global $wpdb;
         return $wpdb;
     }
 
+    /**
+     * Creates `wca_taxonomy_relations` table
+     */
     public function create_taxonomy_relations_table()
     {
 
@@ -25,12 +35,20 @@ class Database
         dbDelta($sql);
     }
 
+    /**
+     * Drops `wca_taxonomy_relations` table
+     */
     public function drop_taxonomy_relations_table()
     {
         $this->wpdb()->query("DROP TABLE IF EXISTS `{$this->wpdb()->base_prefix}wca_taxonomy_relations`");
     }
 
-
+    /**
+     * Select relations by passed params ( id, taxonomy_id, meta_name, attribute_label)
+     * returns array based on params if any ( col, row)
+     * @param array $params
+     * @return array|object|void|null
+     */
     public function select_taxonomy_relations($params = [])
     {
         $sql = "SELECT a.`id` , a.`taxonomy_id`, b.`attribute_label`, a.`meta_name` FROM `{$this->wpdb()->base_prefix}wca_taxonomy_relations` AS a ";
@@ -60,12 +78,6 @@ class Database
         return $this->wpdb()->get_results($sql, 'ARRAY_A');
     }
 
-    public function select_taxonomy_relation_labels()
-    {
-        $results = $this->select_taxonomy_relations(['col' => 2]);
-        return array_unique($results);
-    }
-
     public function insert_taxonomy_relations($taxonomy, $meta)
     {
         return $this->wpdb()->insert("{$this->wpdb()->base_prefix}wca_taxonomy_relations", [
@@ -88,17 +100,14 @@ class Database
         return $this->wpdb()->get_results($sql, 'ARRAY_A');
     }
 
-    public function insert_attribute_taxonomy($attribute_name)
+    public function select_postmeta_by_metaname($meta_name)
     {
-        return wc_create_attribute([
-            'name' => $attribute_name,
-            'type' => 'select',
-            'order_by' => 'menu_order',
-            'has_archives' => false,
-        ]);
+        $sql = $this->wpdb()
+            ->prepare("SELECT `post_id`, `meta_value` FROM `{$this->wpdb()->base_prefix}postmeta` WHERE `meta_key` = '_product_attributes' AND `meta_value` LIKE '%%s%';", $meta_name);
+        return $this->wpdb()->get_results($sql, 'ARRAY_A');
     }
 
-    public function update_post_meta_attributes($post_id, string $serialized_value)
+    public function update_postmeta($post_id, string $serialized_value)
     {
         $sql = $this->wpdb()
             ->prepare("UPDATE `{$this->wpdb()->base_prefix}postmeta` SET `meta_value` = '%s' WHERE `post_id` = '%d' AND `meta_key` = '%s'",

@@ -1,28 +1,30 @@
 <?php
 
-use WooCustomAttributes\Inc\Database;
+use WooCustomAttributes\Inc\Api;
+use WooCustomAttributes\Inc\Request;
 
 if (isset($_POST['submit_term_action'])) {
-    $requestApi = new \WooCustomAttributes\Inc\Request();
+    $requestApi = new Request();
     if ($_POST['action'] === 'none')
         show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили действие</p></div>');
 
     if ($_POST['action'] === 'delete') {
         (!isset($_POST['relation_ids']) || empty($_POST['relation_ids'])) ?
             show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили релации за изтриване</p></div>') :
-            $requestApi->delete_relation($_POST['relation_ids']);
+            $requestApi->action_delete_relation($_POST['relation_ids']);
     }
     if ($_POST['action'] === 'generate_terms') {
         (!isset($_POST['relation_ids']) || empty($_POST['relation_ids'])) ?
             show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили релации за генериране</p></div>') :
-            $requestApi->generate_terms($_POST['relation_ids']);
+            $requestApi->action_generate_terms($_POST['relation_ids']);
     }
 }
 
-$db = new Database();
+$api = new Api();
 $available_taxonomies = wc_get_attribute_taxonomies();
 $available_meta_attributes = WooCustomAttributes\Inc\Api::list_distinct_meta_attributes();
-$available_relations = $db->select_taxonomy_relations();
+$available_relations = $api->get_relations();
+$available_relation_labels = $api->get_relation_taxonomy_labels();
 sort($available_taxonomies);
 sort($available_meta_attributes);
 ?>
@@ -57,17 +59,17 @@ sort($available_meta_attributes);
                             </th>
                             <th>Мета атрибути</th>
                         </tr>
-                        <?php foreach ($db->select_taxonomy_relation_labels() as $i => $taxonomy): ?>
+                        <?php foreach ($api->get_relation_taxonomy_labels() as $i => $taxonomy_label): ?>
                             <tr>
                                 <td>
                                     <label for="taxonomy_<?= $i ?>">
                                         <input id="taxonomy_<?= $i ?>" class="checkbox-taxonomy" data-target="<?= $i ?>"
                                                type="checkbox">
-                                        <?= $taxonomy ?>
+                                        <?= $taxonomy_label ?>
                                     </label>
                                 </td>
                                 <td>
-                                    <?php foreach ($db->select_taxonomy_relations(['attribute_label' => $taxonomy]) as $relation): ?>
+                                    <?php foreach ($api->get_relation_by_label($taxonomy_label) as $relation): ?>
                                         <div class="form-row form-check">
                                             <label>
                                                 <input class="checkbox-meta-<?= $i ?>" name="relation_ids[]"
@@ -85,7 +87,7 @@ sort($available_meta_attributes);
                             </tr>
                         <?php endif; ?>
                     </table>
-                    <?php if (!empty($db->select_taxonomy_relation_labels())): ?>
+                    <?php if (!empty($available_relations)): ?>
                         <div class="form-group">
                             <label for="select_action">Изберете действие</label>
                             <div class="form-row mb-4">

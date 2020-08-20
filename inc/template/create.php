@@ -8,7 +8,7 @@ if (isset($_POST['submit_term_link'])) {
     $input_meta = $_POST['meta_name'] === 'none' ? null : $_POST['meta_name'];
 
     if ($input_taxonomy && $input_meta)
-        $requestApi->create_relation($input_taxonomy, $input_meta);
+        $requestApi->action_create_relation($input_taxonomy, $input_meta);
 
     if ($input_taxonomy === 0)
         show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили таксономия</p></div>');
@@ -73,12 +73,10 @@ sort($available_meta_attributes);
                                 <?php echo $taxonomy->attribute_label ?> </option>
                         <?php endforeach; ?>
                     </select>
-
                     <input class="btn btn-primary btn-sm ml-2" name="submit_term_link" type="submit"
                            value="Свързване">
                 </form>
             </div>
         </div>
     </div>
-</div>
 </div>

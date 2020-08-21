@@ -39,8 +39,7 @@ class Hooks
     {
         if ($meta_key !== '_product_attributes')
             return;
-        foreach ($this->api->get_relations() as $relation) {
+        foreach ($this->api->get_relations() as $relation)
             $this->api->handle_generate_terms($relation, $post_id, $meta_value);
-        }
     }
 }

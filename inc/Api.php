@@ -93,7 +93,6 @@ class Api
     /**
      * Searches in array for a specific field and value
      * @param $array
-     * @param $field
      * @param $value
      * @return mixed|null
      */
@@ -112,8 +111,6 @@ class Api
         $_product_attribute = $this->array_search_attribute_by_name($_product_meta_attributes, $relation['meta_name']);
         if (!$_product_attribute)
             return;
-        var_dump($relation, $post_id, $_product_attribute);
-        var_dump('-----');
         $pa_name = wc_attribute_taxonomy_name($relation['attribute_label']);
         $tern_attribute = [
             $pa_name => [

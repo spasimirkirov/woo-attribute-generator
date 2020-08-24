@@ -123,13 +123,6 @@ class Api
         ];
         $this->db->update_postmeta($post_id, maybe_serialize(array_merge($_product_meta_attributes, $tern_attribute)));
         $object_term = wp_set_object_terms($post_id, $_product_attribute['value'], $pa_name, true);
-        var_dump([$pa_name => [
-            'name' => $pa_name,
-            'value' => $_product_attribute['value'],
-            'is_taxonomy' => 1,
-            'is_visible' => 1,
-            'is_variation' => 0,
-        ]]);
         if (is_wp_error($object_term)) {
             var_dump($object_term);
             return;

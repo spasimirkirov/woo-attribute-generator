@@ -18,9 +18,9 @@ class UserInterface
     {
         $this->pages['main'] = add_menu_page('Woo Custom Attributes', 'Woo Custom Attributes', 'manage_options', 'woo_custom_attributes');
         $this->pages['sub'] = [
-            ['woo_custom_attributes', 'Woo Custom Attributes', 'Relations', 'manage_options', 'woo_custom_attributes', [$this, 'woo_custom_attributes_page']],
-            ['woo_custom_attributes', 'Woo Custom Attribute Create', 'Creates', 'manage_options', 'woo_custom_attributes_create', [$this, 'woo_custom_attributes_create_page']],
-            ['woo_custom_attributes', 'Woo Custom Attributes Settings', 'Settings', 'manage_options', 'woo_custom_attributes_settings', [$this, 'woo_custom_attributes_settings_page']],
+            ['woo_custom_attributes', 'Woo Custom Attributes', 'Релации', 'manage_options', 'woo_custom_attributes', [$this, 'woo_custom_attributes_page']],
+            ['woo_custom_attributes', 'Woo Custom Attribute Create', 'Добавяне', 'manage_options', 'woo_custom_attributes_create', [$this, 'woo_custom_attributes_create_page']],
+            ['woo_custom_attributes', 'Woo Custom Attributes Settings', 'Настройки', 'manage_options', 'woo_custom_attributes_settings', [$this, 'woo_custom_attributes_settings_page']],
         ];
     }
 

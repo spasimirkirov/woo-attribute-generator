@@ -10,6 +10,17 @@ require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
  */
 class Database
 {
+    private $relations_table_name;
+
+    /**
+     * Database constructor.
+     */
+    public function __construct()
+    {
+        $this->relations_table_name = $this->wpdb()->prefix.'woo_custom_attributes_relations';
+    }
+
+
     /**
      * @return \wpdb
      */
@@ -26,12 +37,13 @@ class Database
     {
 
         $charset_collate = $this->wpdb()->get_charset_collate();
-        $sql = "CREATE TABLE IF NOT EXISTS `{$this->wpdb()->base_prefix}wca_taxonomy_relations` (
+        $sql = "CREATE TABLE IF NOT EXISTS `{$this->relations_table_name}` (
 	        `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 	        `taxonomy_id` BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
             `meta_name` nvarchar(50) NOT NULL,
             PRIMARY KEY  (`id`)
             ) $charset_collate;";
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
     }
 
@@ -40,7 +52,7 @@ class Database
      */
     public function drop_taxonomy_relations_table()
     {
-        $this->wpdb()->query("DROP TABLE IF EXISTS `{$this->wpdb()->base_prefix}wca_taxonomy_relations`");
+        $this->wpdb()->query("DROP TABLE IF EXISTS `{$this->relations_table_name}`");
     }
 
     /**
@@ -51,7 +63,7 @@ class Database
      */
     public function select_taxonomy_relations($params = [])
     {
-        $sql = "SELECT a.`id` , a.`taxonomy_id`, b.`attribute_label`, a.`meta_name` FROM `{$this->wpdb()->base_prefix}wca_taxonomy_relations` AS a ";
+        $sql = "SELECT a.`id` , a.`taxonomy_id`, b.`attribute_label`, a.`meta_name` FROM `{$this->relations_table_name}` AS a ";
         $sql .= " INNER JOIN `{$this->wpdb()->base_prefix}woocommerce_attribute_taxonomies` as b ON a.`taxonomy_id` = b.`attribute_id`";
 
         $sql .= isset($params['id']) ?
@@ -80,7 +92,7 @@ class Database
 
     public function insert_taxonomy_relations($taxonomy, $meta)
     {
-        return $this->wpdb()->insert("{$this->wpdb()->base_prefix}wca_taxonomy_relations", [
+        return $this->wpdb()->insert("{$this->relations_table_name}", [
             'taxonomy_id' => $taxonomy,
             'meta_name' => $meta
         ]);
@@ -88,7 +100,7 @@ class Database
 
     public function delete_taxonomy_relations(array $relation_ids)
     {
-        $sql = "DELETE FROM `{$this->wpdb()->base_prefix}wca_taxonomy_relations`";
+        $sql = "DELETE FROM `{$this->relations_table_name}`";
         $sql .= " WHERE `id` IN(" . implode(",", $relation_ids) . ");";
         return $this->wpdb()->query($sql);
     }

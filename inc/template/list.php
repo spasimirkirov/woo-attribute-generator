@@ -18,11 +18,21 @@ if (isset($_POST['submit_term_action'])) {
             show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили релации за генериране</p></div>') :
             $requestApi->action_generate_terms($_POST['relation_ids']);
     }
+    if ($_POST['action'] === 'create') {
+        $input_taxonomy = intval($_POST['taxonomy_id']);
+        $input_meta = $_POST['meta_name'] === 'none' ? null : $_POST['meta_name'];
+        if ($input_taxonomy && $input_meta)
+            $requestApi->action_create_relation($input_taxonomy, $input_meta);
+        if ($input_taxonomy === 0)
+            show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили таксономия</p></div>');
+        if (!$input_meta)
+            show_message('<div class="error notice notice-error is-dismissible"><p>Не сте посочили мета атрибут</p></div>');
+    }
 }
 
 $api = new Api();
 $available_taxonomies = wc_get_attribute_taxonomies();
-$available_meta_attributes = WooCustomAttributes\Inc\Api::list_distinct_meta_attributes();
+$available_meta_attributes = WooProductAttributes\Inc\Api::list_distinct_relation_metas();
 $available_relations = $api->get_relations();
 $available_relation_labels = $api->get_relation_taxonomy_labels();
 sort($available_taxonomies);
@@ -37,19 +47,17 @@ sort($available_meta_attributes);
                        href="<?= admin_url('admin.php?page=woo_custom_attributes'); ?>">Релации</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       href="<?= admin_url('admin.php?page=woo_custom_attributes_create'); ?>">Добави</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="<?= admin_url('admin.php?page=woo_custom_attributes_settings'); ?>">Настройки</a>
                 </li>
             </ul>
             <div class="card-header bg-dark text-light">
                 Управление на взаимоотношенията м/у продуктови атрибути и продуктови мета атрибути
             </div>
-            <div class="p-2">
-                <form action="" method="post">
-                    <table class="table table-hover table-sm">
+        </div>
+        <div class="col-12">
+            <form action="" method="post">
+                <div class="form-group">
+                    <table class="table table-hover table-bordered">
                         <tr>
                             <th>
                                 <label>
@@ -87,22 +95,49 @@ sort($available_meta_attributes);
                             </tr>
                         <?php endif; ?>
                     </table>
-                    <?php if (!empty($available_relations)): ?>
-                        <div class="form-group">
-                            <label for="select_action">Изберете действие</label>
-                            <div class="form-row mb-4">
-                                <select class="custom-select form-control mr-1" id="select_action" name="action">
-                                    <option value="none">Избор</option>
-                                    <option value="delete">Изтриване</option>
-                                    <option value="generate_terms">Генериране на Термини</option>
-                                </select>
-                                <input class="btn btn-primary btn-sm" name="submit_term_action" type="submit"
-                                       value="Изпълни">
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </form>
-            </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-auto">
+                        <label for="select-relation-category">Избор на таксономия на атрибут</label>
+                        <select class="form-control" id="select-relation-category" name="taxonomy_id">
+                            <option value="none">Избор</option>
+                            <?php foreach ($available_taxonomies as $taxonomy): ?>
+                                <option value="<?php echo $taxonomy->attribute_id; ?>">
+                                    <?php echo $taxonomy->attribute_label ?> </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="text-secondary">
+                            Изберете с коя таксономия да бъдат свързани мета атрибутите.<br>
+                            За създаване на таксономии, вижте
+                            <a href="<?= admin_url('edit.php?post_type=product&page=product_attributes') ?>">
+                                Продукти->Атрибути
+                            </a>
+                        </p>
+                    </div>
+                    <div class="form-group col-auto">
+                        <label for="select_meta">Избор на мета атрибути</label>
+                        <select class="form-control" id="select_meta" name="meta_name">
+                            <option value="0">Избор</option>
+                            <?php foreach ($available_meta_attributes as $attribute): ?>
+                                <option value="<?= $attribute ?>"><?= $attribute ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p>Задръжте "CTR" бутона повреме на избора си за селектиране на няколко опции. </p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-12">
+                        <label for="select_action">Изберете действие</label><br>
+                        <select class="form-control custom-select" id="select_action" name="action">
+                            <option value="none">Избор</option>
+                            <option value="create">Добавяне</option>
+                            <option value="delete">Изтриване</option>
+                            <option value="generate_terms">Генериране на Термини</option>
+                        </select>
+                        <input class="btn btn-primary" name="submit_term_action" type="submit" value="Изпълни">
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>

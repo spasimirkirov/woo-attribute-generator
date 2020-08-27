@@ -6,10 +6,6 @@
                     <a class="nav-link" href="<?= admin_url('admin.php?page=woo_custom_attributes'); ?>">Релации</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       href="<?= admin_url('admin.php?page=woo_custom_attributes_create'); ?>">Добави</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link active"
                        href="<?= admin_url('admin.php?page=woo_custom_attributes_settings'); ?>">Настройки</a>
                 </li>

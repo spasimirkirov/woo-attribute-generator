@@ -17,18 +17,17 @@ class Request
         $this->api = new Api();
     }
 
-    public function action_create_relation(int $taxonomy_id, array $meta_names)
+    public function action_create_relation(int $taxonomy_id, string $meta_name)
     {
-        foreach ($meta_names as $meta_name) {
-            $relation = Api::is_taxonomy_meta_related($taxonomy_id, $meta_name);
-            if ($relation) {
-                show_message('<div class="error notice notice-error is-dismissible"><p>' . $relation['attribute_label'] . ' и ' . $relation['meta_name'] . ' вече са релативни</p></div>');
-                return;
-            }
-            $rows = $this->api->create_relation($taxonomy_id, $meta_name);
-            if ($rows && $rows > 0)
-                show_message('<div class="updated notice notice-success is-dismissible"><p>Успешно добавяне на ' . $meta_name . ' към релации</p></div>');
+        $relation = Api::is_taxonomy_meta_related($taxonomy_id, $meta_name);
+        if ($relation) {
+            show_message('<div class="error notice notice-error is-dismissible"><p>' . $relation['attribute_label'] . ' и ' . $relation['meta_name'] . ' вече са релативни</p></div>');
+            return;
         }
+        $rows = $this->api->create_relation($taxonomy_id, $meta_name);
+        if ($rows && $rows > 0)
+            show_message('<div class="updated notice notice-success is-dismissible"><p>Успешно добавяне на ' . $meta_name . ' към релации</p></div>');
+
     }
 
     public function action_delete_relation(array $relation_ids)

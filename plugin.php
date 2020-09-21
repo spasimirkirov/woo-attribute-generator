@@ -14,7 +14,6 @@ if (!defined('ABSPATH')) {
     die;
 }
 
-use WooCustomAttributes\Inc\Hooks;
 use WooCustomAttributes\Inc\WooAttributePlugin;
 
 $dependencies = [
@@ -39,10 +38,9 @@ foreach ($dependencies as $plugin_file => $plugin_name) {
 if ($errors === 0) {
     // include the Composer autoload file
     require plugin_dir_path(__FILE__) . 'vendor/autoload.php';
-    $hooks = new Hooks();
-    register_activation_hook(__FILE__, [$hooks, 'activate']);
-    register_deactivation_hook(__FILE__, [$hooks, 'deactivate']);
-    register_uninstall_hook(__FILE__, [$hooks, 'uninstall']);
+    register_activation_hook(__FILE__, [\WooCustomAttributes\Inc\Hooks::class, 'activate']);
+    register_deactivation_hook(__FILE__, [\WooCustomAttributes\Inc\Hooks::class, 'deactivate']);
+    register_uninstall_hook(__FILE__, [\WooCustomAttributes\Inc\Hooks::class, 'uninstall']);
     $WooAttributePlugin = new WooAttributePlugin();
     $WooAttributePlugin->init();
 }

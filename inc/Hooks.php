@@ -14,7 +14,7 @@ class Hooks
         $this->api = new Api();
     }
 
-    public function activate()
+    public static function activate()
     {
         flush_rewrite_rules();
         $db = new Database();
@@ -22,12 +22,12 @@ class Hooks
         update_option("woo_custom_attributes_auto_generate", false);
     }
 
-    public function deactivate()
+    public static function deactivate()
     {
         flush_rewrite_rules();
     }
 
-    public function uninstall()
+    public static function uninstall()
     {
         flush_rewrite_rules();
         $db = new Database();
